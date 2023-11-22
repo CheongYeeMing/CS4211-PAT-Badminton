@@ -1,0 +1,512 @@
+﻿//@@Badminton Singles@@
+
+/** China Open 2023 | Viktor Axelsen (DEN) [1] vs. Loh Kean Yew (SGP) [7] | QF */
+/** Denmark Open 2022 | Viktor Axelsen (DEN) [1] vs. Loh Kean Yew (SGP) [7] | QF */
+
+/**     Badminton Court Model Layout                                        
+     																		
+     Player2: Victor Axelson [VTA]											
+        																	
+ <-------RHS-------><------LHS------->
+ +----+------------+------------+----+
+ | 0  |     11     |     12     | 0  | Back Court
+ |----+------------+------------+----|
+ |    |            |            |    |
+ |    |            |            |    |
+ | 0  |     9      |     10     | 0  | Mid Court
+ |    |            |            |    |
+ |    |            |            |    |
+ |----+------------+------------+----|
+ |    |            |            |    | 
+ | 0  |     7      |     8      | 0  | Front Court
+ |    |            |            |    | 
+ +===================================+ Center Line || Net
+ |    |            |            |    | 
+ | 0  |     5      |     6      | 0  | 
+ |    |            |            |    | 
+ |----+------------+------------+----| Service Line
+ |    |            |            |    |
+ |    |            |            |    |
+ | 0  |     3      |     4      | 0  |
+ |    |            |            |    |							Legend:
+ |    |            |            |    |							1-6: LKY Court
+ |----+------------+------------+----|							7-12: VTA Court
+ | 0  |     1      |     2      | 0  |							0: Out of Bounds
+ +----+------------+------------+----+ End Line 
+ <-------LHS-------><------RHS------->       
+ 
+      Player1: Loh Kean Yew [LKY]
+
+*/
+
+/////////////////////
+/** Win Rate Model */
+/////////////////////
+
+/** Imports */
+#import "PAT.Math";
+
+
+////////////////
+/** Constants */
+////////////////
+
+/** Points */
+#define GAME_POINT 20;
+#define MAX_GAME_POINT 30;
+#define MATCH_POINT 2;
+
+/** Players */
+enum{LKY, VTA, na};
+
+/** Player Positions */
+enum{LKY_RHS, LKY_LHS, VTA_RHS, VTA_LHS};
+
+/** Game States */
+enum{NORMAL, DEUCE, LKY_GAME_POINT, VTA_GAME_POINT};
+
+
+////////////////
+/** Variables */
+////////////////
+
+var turn = na; // Serve turn;
+var won = na;
+var lky_game_point = 0;
+var vta_game_point = 0;
+var shuttlecock = 0;
+var game_state = NORMAL;
+var lky_match_point = 0;
+var vta_match_point = 0;
+
+
+/////////////
+/** Events */
+/////////////
+
+/** Game Event */
+Game = FirstPlayerToServe; (LKY_Serve [] VTA_Serve);
+
+
+//////////////////////
+/** Coin Toss Event */
+//////////////////////
+
+/** Determines if LKY or VTA serves first. */
+/** First Serve always start from the RHS of court */
+FirstPlayerToServe = []i:{LKY_RHS,VTA_RHS} @ TossCoin {turn = i} -> Skip;
+
+
+/////////////////////
+/** Service Events */
+/////////////////////
+
+LKY_Serve = [won == na && turn == LKY_RHS] LKYReady_RHS -> LKY_serve_RHS 
+			[] 
+			[won == na && turn == LKY_LHS] LKYReady_LHS -> LKY_serve_LHS;
+VTA_Serve = [won == na && turn == VTA_RHS] LSReady_RHS -> VTA_serve_RHS 
+			[] 
+			[won == na && turn == VTA_LHS] LSReady_LHS -> VTA_serve_LHS;
+
+/** LKY serve from Position: 3 */
+LKY_serve_LHS = pcase{
+			6: Low_Serve_IN {shuttlecock = 10} -> VTA_mid_stroke_LHS
+			72: High_Serve_IN {shuttlecock = 12} -> VTA_back_stroke_LHS
+			5: Service_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point
+			};
+			
+/** LKY serve from Position: 4 */
+LKY_serve_RHS = pcase {
+			7: Low_Serve_IN {shuttlecock = 9} -> VTA_mid_stroke_RHS
+			75: High_Serve_IN {shuttlecock = 11} -> VTA_back_stroke_RHS
+			6: Service_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point
+			};
+			
+/** VTA serve from Position: 10 */
+VTA_serve_LHS = pcase {
+			73: Low_Serve_IN {shuttlecock = 3} -> LKY_mid_stroke_LHS
+			4: High_Serve_IN {shuttlecock = 1} -> LKY_back_stroke_LHS
+			1: Service_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point
+			};
+			
+/** VTA serve from Position: 9 */
+VTA_serve_RHS = pcase {
+			63: Low_Serve_IN {shuttlecock = 4} -> LKY_mid_stroke_RHS
+			10: High_Serve_IN {shuttlecock = 2} -> LKY_back_stroke_RHS
+			2: Service_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point
+			};
+			
+			
+///////////////////////////
+/** Return Events: Front */
+///////////////////////////
+
+/** LKY return from Position: 5 */
+LKY_front_stroke_LHS = pcase { 
+			
+			/** Net Shot */
+			89: Net_Shot_STRAIGHT {shuttlecock = 7} -> VTA_front_stroke_RHS
+			22: Net_Shot_CROSS {shuttlecock = 8} -> VTA_front_stroke_LHS
+			
+			/** Net Lift Shot */
+			31: Net_Lift_Shot_STRAIGHT {shuttlecock = 11} -> VTA_back_stroke_RHS
+			42: Net_Lift_Shot_CROSS {shuttlecock = 12} -> VTA_back_stroke_LHS
+			
+			/** Error */
+			25: Front_Stroke_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point     		                                                            
+			};
+			
+/** LKY return from Position: 6 */
+LKY_front_stroke_RHS = pcase { 
+
+			/** Net Shot */
+			46: Net_Shot_CROSS {shuttlecock = 7} -> VTA_front_stroke_RHS
+			92: Net_Shot_STRAIGHT {shuttlecock = 8} -> VTA_front_stroke_LHS
+			
+			/** Net Lift Shot */
+			44: Net_Lift_Shot_CROSS {shuttlecock = 11} -> VTA_back_stroke_RHS
+			73: Net_Lift_Shot_STRAIGHT {shuttlecock = 12} -> VTA_back_stroke_LHS
+			
+			/** Error */
+			17: Front_Stroke_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point     		                                                            
+			};
+			
+/** VTA return from Position: 7 */
+VTA_front_stroke_RHS = pcase { 
+
+			/** Net Lift Shot */
+			95: Net_Lift_Shot_STRAIGHT {shuttlecock = 1} -> LKY_back_stroke_LHS
+			58: Net_Lift_Shot_CROSS {shuttlecock = 2} -> LKY_back_stroke_RHS
+			
+			/** Net Shot */
+			83: Net_Shot_STRAIGHT {shuttlecock = 5} -> LKY_front_stroke_LHS
+			44: Net_Shot_CROSS {shuttlecock = 6} -> LKY_front_stroke_RHS
+			
+			/** Error */
+			30: Front_Stroke_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point 		                                                            
+			};
+			
+/** VTA return from Position: 8 */
+VTA_front_stroke_LHS = pcase { 
+
+			/** Net Lift Shot */
+			102: Net_Lift_Shot_CROSS {shuttlecock = 1} -> LKY_back_stroke_LHS
+			41: Net_Lift_Shot_STRAIGHT {shuttlecock = 2} -> LKY_back_stroke_RHS
+			
+			/** Net Shot */
+			30: Net_Shot_CROSS {shuttlecock = 5} -> LKY_front_stroke_LHS
+			77: Net_Shot_STRAIGHT {shuttlecock = 6} -> LKY_front_stroke_RHS
+			
+			/** Error */
+			15: Front_Stroke_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point    		                                                            
+			};
+			
+			
+/////////////////////////
+/** Return Events: Mid */
+/////////////////////////
+
+/** LKY return from Position: 3 */
+LKY_mid_stroke_LHS = pcase { 
+
+			/** Drop Shot */
+			106: Drop_Shot_STRAIGHT {shuttlecock = 7} -> VTA_front_stroke_RHS
+			18: Drop_Shot_CROSS {shuttlecock = 8} -> VTA_front_stroke_LHS
+
+			/** Drive Shot */
+			34: Drive_Shot_STRAIGHT {shuttlecock = 9} -> VTA_mid_stroke_RHS
+			80: Drive_Shot_CROSS {shuttlecock = 10} -> VTA_mid_stroke_LHS
+
+			/** Clear Shot */
+			12: Clear_Shot_STRAIGHT {shuttlecock = 11} -> VTA_back_stroke_RHS
+			20: Clear_Shot_CROSS {shuttlecock = 12} -> VTA_back_stroke_LHS
+			
+			/** Error */
+			20: Mid_Stroke_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point                                                            
+			};
+			
+/** LKY return from Position: 4 */
+LKY_mid_stroke_RHS = pcase { 
+
+			/** Drop Shot */
+			40: Drop_Shot_CROSS {shuttlecock = 7} -> VTA_front_stroke_RHS
+			97: Drop_Shot_STRAIGHT {shuttlecock = 8} -> VTA_front_stroke_LHS
+
+			/** Drive Shot */
+			67: Drive_Shot_CROSS {shuttlecock = 9} -> VTA_mid_stroke_RHS
+			47: Drive_Shot_STRAIGHT {shuttlecock = 10} -> VTA_mid_stroke_LHS
+
+			/** Clear Shot */
+			10: Clear_Shot_CROSS {shuttlecock = 11} -> VTA_back_stroke_RHS
+			17: Clear_Shot_STRAIGHT {shuttlecock = 12} -> VTA_back_stroke_LHS
+			
+			/** Error */
+			31: Mid_Stroke_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point   		                                                            
+			};
+	
+/** VTA return from Position: 9 */
+VTA_mid_stroke_RHS = pcase { 
+
+			/** Clear Shot */
+			13: Clear_Shot_STRAIGHT {shuttlecock = 1} -> LKY_back_stroke_LHS
+			17: Clear_Shot_CROSS {shuttlecock = 2} -> LKY_back_stroke_RHS
+
+			/** Drive Shot */
+			54: Drive_Shot_STRAIGHT {shuttlecock = 3} -> LKY_mid_stroke_LHS
+			73: Drive_Shot_CROSS {shuttlecock = 4} -> LKY_mid_stroke_RHS
+
+			/** Drop Shot */
+			58: Drop_Shot_STRAIGHT {shuttlecock = 5} -> LKY_front_stroke_LHS
+			51: Drop_Shot_CROSS {shuttlecock = 6} -> LKY_front_stroke_RHS
+			
+			/** Error */
+			28: Mid_Stroke_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point   		                                                            
+			};
+			
+/** VTA return from Position: 10 */
+VTA_mid_stroke_LHS = pcase { 
+
+			/** Clear Shot */
+			26: Clear_Shot_CROSS {shuttlecock = 1} -> LKY_back_stroke_LHS
+			20: Clear_Shot_STRAIGHT {shuttlecock = 2} -> LKY_back_stroke_RHS
+
+			/** Drive Shot */
+			54: Drive_Shot_CROSS {shuttlecock = 3} -> LKY_mid_stroke_LHS
+			61: Drive_Shot_STRAIGHT {shuttlecock = 4} -> LKY_mid_stroke_RHS
+
+			/** Drop Shot */
+			24: Drop_Shot_CROSS {shuttlecock = 5} -> LKY_front_stroke_LHS
+			98: Drop_Shot_STRAIGHT {shuttlecock = 6} -> LKY_front_stroke_RHS
+			
+			/** Error */
+			22: Mid_Stroke_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point    		                                                            
+			};
+
+
+//////////////////////////
+/** Return Events: Back */
+//////////////////////////
+
+/** LKY return from Position: 1 */
+LKY_back_stroke_LHS = pcase { 
+
+			/** Drop Shot */
+			21: Drop_Shot_STRAIGHT {shuttlecock = 7} -> VTA_front_stroke_RHS
+			27: Drop_Shot_CROSS {shuttlecock = 8} -> VTA_front_stroke_LHS
+
+			/** Drive Shot */
+			99: Smash_Shot_STRAIGHT {shuttlecock = 9} -> VTA_mid_stroke_RHS
+			57: Smash_Shot_CROSS {shuttlecock = 10} -> VTA_mid_stroke_LHS
+
+			/** Clear Shot */
+			33: Clear_Shot_STRAIGHT {shuttlecock = 11} -> VTA_back_stroke_RHS
+			13: Clear_Shot_CROSS {shuttlecock = 12} -> VTA_back_stroke_LHS
+			
+			/** Error */
+			17: Back_Stroke_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point  		                                                            
+			};
+			
+/** LKY return from Position: 2 */
+LKY_back_stroke_RHS = pcase { 
+
+			/** Drop Shot */
+			18: Drop_Shot_CROSS {shuttlecock = 7} -> VTA_front_stroke_RHS
+			14: Drop_Shot_STRAIGHT {shuttlecock = 8} -> VTA_front_stroke_LHS
+
+			/** Drive Shot */
+			32: Smash_Shot_CROSS {shuttlecock = 9} -> VTA_mid_stroke_RHS
+			61: Smash_Shot_STRAIGHT {shuttlecock = 10} -> VTA_mid_stroke_LHS
+
+			/** Clear Shot */
+			6: Clear_Shot_CROSS {shuttlecock = 11} -> VTA_back_stroke_RHS
+			11: Clear_Shot_STRAIGHT {shuttlecock = 12} -> VTA_back_stroke_LHS
+			
+			/** Error */
+			19: Back_Stroke_ERROR {shuttlecock = 0} -> VTA_Win_Game_Point     		                                                            
+			}; 
+
+/** VTA return from Position: 12 */
+VTA_back_stroke_LHS = pcase { 
+
+			/** Clear Shot */
+			15: Clear_Shot_STRAIGHT {shuttlecock = 1} -> LKY_back_stroke_LHS
+			13: Clear_Shot_CROSS {shuttlecock = 2} -> LKY_back_stroke_RHS
+
+			/** Drive Shot */
+			44: Smash_Shot_STRAIGHT {shuttlecock = 3} -> LKY_mid_stroke_LHS
+			74: Smash_Shot_CROSS {shuttlecock = 4} -> LKY_mid_stroke_RHS
+
+			/** Drop Shot */
+			5: Drop_Shot_STRAIGHT {shuttlecock = 5} -> LKY_front_stroke_LHS
+			5: Drop_Shot_CROSS {shuttlecock = 6} -> LKY_front_stroke_RHS
+			
+			/** Error */
+			22: Back_Stroke_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point    		                                                            
+			};
+
+/** VTA return from Position: 11 */
+VTA_back_stroke_RHS = pcase { 
+
+			/** Clear Shot */
+			18: Clear_Shot_CROSS {shuttlecock = 1} -> LKY_back_stroke_LHS
+			0: Clear_Shot_STRAIGHT {shuttlecock = 2} -> LKY_back_stroke_RHS
+
+			/** Drive Shot */
+			64: Smash_Shot_CROSS {shuttlecock = 3} -> LKY_mid_stroke_LHS
+			27: Smash_Shot_STRAIGHT {shuttlecock = 4} -> LKY_mid_stroke_RHS
+
+			/** Drop Shot */
+			8: Drop_Shot_CROSS {shuttlecock = 5} -> LKY_front_stroke_LHS
+			10: Drop_Shot_STRAIGHT {shuttlecock = 6} -> LKY_front_stroke_RHS
+			
+			/** Error */
+			8: Back_Stroke_ERROR {shuttlecock = 0} -> LKY_Win_Game_Point 		                                                            
+			};
+			
+
+///////////////////////////
+/** Win Game Point Event */
+///////////////////////////
+			
+/** VTA makes an Error -> LKY gets a game point */
+LKY_Win_Game_Point = {
+
+	/** LKY +1 Game Point */
+	lky_game_point++;
+	
+	/** Game State: Normal */
+	if (game_state == NORMAL) {
+		if (lky_game_point == GAME_POINT) {
+			game_state = LKY_GAME_POINT;
+		}
+		turn = lky_game_point % 2;
+	}
+	
+	/** Game State: Deuce */
+	else if (game_state == DEUCE) {
+		/** Sudden Death */
+		if (lky_game_point == MAX_GAME_POINT) {
+			/** LKY +1 Match Point */
+			lky_match_point++;
+			
+			/** LKY wins the Match */
+			if (lky_match_point == MATCH_POINT) {
+				won = LKY;
+			}
+			
+			/** Reset for next Game */
+			lky_game_point = 0; 
+			vta_game_point = 0;
+			game_state = NORMAL; 
+			turn = LKY_RHS;
+		}
+		else {
+			game_state = LKY_GAME_POINT; 
+			turn = lky_game_point % 2;
+		}
+	}
+	
+	/** Game State: VTA_GAME_POINT */
+	else if (game_state == VTA_GAME_POINT) {
+		/** Deuce */
+		if (lky_game_point == vta_game_point) {
+			game_state = DEUCE;
+		}
+		turn = lky_game_point % 2;
+	}
+	
+	/** Game State: LKY_GAME_POINT */
+	else if (game_state == LKY_GAME_POINT) {
+		/** LKY +1 Match Point */
+		lky_match_point++;
+		
+		/** LKY wins the Match */
+		if (lky_match_point == MATCH_POINT) {
+			won = LKY;
+		}
+		
+		/** Reset for next Game */
+		lky_game_point = 0;
+		vta_game_point = 0;
+		game_state = NORMAL;
+		turn = LKY_RHS;
+	}
+	
+} -> NextPoint;
+
+/** LKY makes an Error -> VTA gets a game point */
+VTA_Win_Game_Point = {
+
+	/** VTA +1 Game Point */
+	vta_game_point++;
+	
+	/** Game State: Normal */
+	if (game_state == NORMAL) {
+		if (vta_game_point == GAME_POINT) {
+			game_state = VTA_GAME_POINT;
+		}
+		turn = vta_game_point % 2 + 2;
+	}
+	
+	/** Game State: Deuce */
+	else if (game_state == DEUCE) {
+		/** Sudden Death */
+		if (vta_game_point == MAX_GAME_POINT) {
+			/** VTA +1 Match Point */
+			vta_match_point++;
+			
+			/** VTA wins the Match */
+			if (vta_match_point == MATCH_POINT) {
+				won = VTA;
+			}
+			
+			/** Reset for next Game */
+			lky_game_point = 0;
+			vta_game_point = 0;
+			game_state = NORMAL;
+			turn = VTA_RHS;
+		}
+		else {
+			game_state = VTA_GAME_POINT;
+			turn = vta_game_point % 2 + 2;
+		}
+	}
+	
+	/** Game State: LKY_GAME_POINT */
+	else if (game_state == LKY_GAME_POINT) {
+		/** Deuce */
+		if (vta_game_point == lky_game_point) {
+			game_state = DEUCE;
+		}
+		turn = vta_game_point % 2 + 2;
+	}
+	
+	else if (game_state == VTA_GAME_POINT) {
+		/** VTA +1 Match Point */
+		vta_match_point++;
+		
+		/** VTA wins the Match */
+		if (vta_match_point == MATCH_POINT) {
+			won = VTA;
+		}
+		
+		/** Reset for next Game */
+		lky_game_point = 0;
+		vta_game_point = 0;
+		game_state = NORMAL;
+		turn = VTA_RHS;
+	}
+
+} -> NextPoint;
+
+
+/** Next Point Event */
+NextPoint = LKY_Serve [] VTA_Serve [] ([won != na] GameOver -> Skip);
+
+
+/////////////////
+/** Assertions */
+/////////////////
+
+#define LKYWin won == LKY;
+#assert Game reaches LKYWin with prob;
