@@ -7,4 +7,4 @@ Implementation of the Player Analysis Toolkit (PAT) PCSP and PRTS models for bad
 Before you can run our models, make sure you have already downloaded the PAT software.
 If not, please download it [here](https://pat.comp.nus.edu.sg/?page_id=2587)!
 
-Once you have downloaded PAT, you can download the above PCSP and PRTS models and verify them in PAT!
+Download the above PCSP and PRTS models and verify them in PAT!
