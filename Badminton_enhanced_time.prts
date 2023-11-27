@@ -52,8 +52,8 @@
 ////////////////
 
 /** Points */
-#define GAME_POINT 1;
-#define MAX_GAME_POINT 2;
+#define GAME_POINT 5;
+#define MAX_GAME_POINT 10;
 #define MATCH_POINT 1;
 
 /** Players */
@@ -86,13 +86,10 @@ var vta_match_point = 0;
 /** FOR PRTS **/
 ////////////////
 
-var previous_shuttlecock = 0;
-
-
 var lky_pos = LKY_4; // initialize to stand somewhere at RHS in LKY field
 var vta_pos = VTA_9; // initialize to stand somewhere at RHS in VTA field
 
-var travel_time = 2;
+var travel_time = 0;
 
 // player takes more time to reach shuttlecock due to fatigue
 var current_rally_count = 0;
@@ -209,15 +206,18 @@ var current_rally_count = 0;
 			else if (next_ball_pos == 12) {travel_time = 0;}
 	};
 
-#define move_btw_val(low, high) (low <= (travel_time * (1 + current_rally_count / 20))) && ((travel_time * (1 + current_rally_count / 20)) <= high);
+//#define move_btw_val(low, high) (low <= (travel_time * (1 + current_rally_count / 3))) && ((travel_time * (1 + current_rally_count / 3)) <= high);
+#define move_btw_val(low, high) (low <= (travel_time  + current_rally_count / 3)) && ((travel_time + current_rally_count / 3) <= high);
 //#define move_btw_val(low, high) (low <= travel_time) && (travel_time <= high);
+
+//test_dist_move = atomic{ magic{call(distance_to_move, 11, VTA_12)} -> Wait[2]; Skip } deadline[6];
 
 /////////////
 /** Events */
 /////////////
 
 /** Game Event */
-Game = FirstPlayerToServe; (LKY_Serve [] VTA_Serve);
+Game = (FirstPlayerToServe; (LKY_Serve [] VTA_Serve)) || Ball_travel;
 
 
 //////////////////////
@@ -242,32 +242,31 @@ var is_reached = false;
 
 /** LKY serve from Position: 3 */
 LKY_serve_LHS = pcase {
-			72 : Low_Serve_IN  {current_rally_count = 0; shuttlecock = 10; previous_shuttlecock = 3; lky_pos = LKY_3; vta_pos = VTA_10} -> VTA_mid_stroke_LHS
-			6 :  High_Serve_IN {current_rally_count = 0; shuttlecock = 12; previous_shuttlecock = 3; lky_pos = LKY_3; vta_pos = VTA_10} -> VTA_back_stroke_LHS
-			5 :  Service_ERROR {current_rally_count = 0; shuttlecock = 0;  previous_shuttlecock = 0; lky_pos = LKY_3; vta_pos = VTA_10} -> VTA_Win_Game_Point
+			72 : Low_Serve_IN  {current_rally_count = 0; shuttlecock = 10;  lky_pos = LKY_3; vta_pos = VTA_10; is_reached = true} -> VTA_mid_stroke_LHS
+			6 :  High_Serve_IN {current_rally_count = 0; shuttlecock = 12;  lky_pos = LKY_3; vta_pos = VTA_10; is_reached = true} -> VTA_back_stroke_LHS
+			5 :  Service_ERROR {current_rally_count = 0; shuttlecock = 0;   lky_pos = LKY_3; vta_pos = VTA_10; is_reached = true} -> VTA_Win_Game_Point
 			};
 			
 /** LKY serve from Position: 4 */
 LKY_serve_RHS = pcase {
-			77: Low_Serve_IN  {current_rally_count = 0; shuttlecock = 9;  previous_shuttlecock = 4; lky_pos = LKY_4; vta_pos = VTA_9} -> VTA_mid_stroke_RHS
-			7:  High_Serve_IN {current_rally_count = 0; shuttlecock = 11; previous_shuttlecock = 4; lky_pos = LKY_4; vta_pos = VTA_9} -> VTA_back_stroke_RHS
-			6:  Service_ERROR {current_rally_count = 0; shuttlecock = 0;  previous_shuttlecock = 0; lky_pos = LKY_4; vta_pos = VTA_9} -> VTA_Win_Game_Point
+			77: Low_Serve_IN  {current_rally_count = 0; shuttlecock = 9;   lky_pos = LKY_4; vta_pos = VTA_9; is_reached = true} -> VTA_mid_stroke_RHS
+			7:  High_Serve_IN {current_rally_count = 0; shuttlecock = 11;  lky_pos = LKY_4; vta_pos = VTA_9; is_reached = true} -> VTA_back_stroke_RHS
+			6:  Service_ERROR {current_rally_count = 0; shuttlecock = 0;   lky_pos = LKY_4; vta_pos = VTA_9; is_reached = true} -> VTA_Win_Game_Point
 			};
 			
 /** VTA serve from Position: 10 */
 VTA_serve_LHS = pcase {
-			73: Low_Serve_IN  {current_rally_count = 0; shuttlecock = 3; previous_shuttlecock = 10; lky_pos = LKY_3; vta_pos = VTA_10} -> LKY_mid_stroke_LHS
-			4:  High_Serve_IN {current_rally_count = 0; shuttlecock = 1; previous_shuttlecock = 10; lky_pos = LKY_3; vta_pos = VTA_10} -> LKY_back_stroke_LHS
-			1:  Service_ERROR {current_rally_count = 0; shuttlecock = 0; previous_shuttlecock = 0;  lky_pos = LKY_3; vta_pos = VTA_10} -> LKY_Win_Game_Point
+			73: Low_Serve_IN  {current_rally_count = 0; shuttlecock = 3;  lky_pos = LKY_3; vta_pos = VTA_10; is_reached = true} -> LKY_mid_stroke_LHS
+			4:  High_Serve_IN {current_rally_count = 0; shuttlecock = 1;  lky_pos = LKY_3; vta_pos = VTA_10; is_reached = true} -> LKY_back_stroke_LHS
+			1:  Service_ERROR {current_rally_count = 0; shuttlecock = 0;   lky_pos = LKY_3; vta_pos = VTA_10; is_reached = true} -> LKY_Win_Game_Point
 			};
 			
 /** VTA serve from Position: 9 */
 VTA_serve_RHS = pcase {
-			63: Low_Serve_IN  {current_rally_count = 0; shuttlecock = 4; previous_shuttlecock = 9; lky_pos = LKY_4; vta_pos = VTA_9} -> LKY_mid_stroke_RHS
-			10: High_Serve_IN {current_rally_count = 0; shuttlecock = 2; previous_shuttlecock = 9; lky_pos = LKY_4; vta_pos = VTA_9} -> LKY_back_stroke_RHS
-			2:  Service_ERROR {current_rally_count = 0; shuttlecock = 0; previous_shuttlecock = 0; lky_pos = LKY_4; vta_pos = VTA_9} -> LKY_Win_Game_Point
-			};
-			
+			63: Low_Serve_IN  {current_rally_count = 0; shuttlecock = 4;  lky_pos = LKY_4; vta_pos = VTA_9; is_reached = true} -> LKY_mid_stroke_RHS
+			10: High_Serve_IN {current_rally_count = 0; shuttlecock = 2;  lky_pos = LKY_4; vta_pos = VTA_9; is_reached = true} -> LKY_back_stroke_RHS
+			2:  Service_ERROR {current_rally_count = 0; shuttlecock = 0;  lky_pos = LKY_4; vta_pos = VTA_9; is_reached = true} -> LKY_Win_Game_Point
+			};		
 			
 ///////////////////////////
 /** Return Events: Front */
@@ -275,92 +274,107 @@ VTA_serve_RHS = pcase {
 // added a timeout based on how far the ball is to the player
 
 // Time it takes for ball to travel
-Ball_travel =   atomic { if (call(move_btw_val,0,1)){Wait[1]} 
-				else if (call(move_btw_val,1,2)){Wait[2]}
-				else if (call(move_btw_val,2,3)){Wait[3]}
-				else if (call(move_btw_val,3,4)){Wait[4]} 
-				else if (call(move_btw_val,4,5)){Wait[5]}
-				else {Wait[6]}; {current_rally_count++} -> Ball_reached {is_reached = true} -> Skip };
+Ball_travel =   ball_check_start -> atomic {inc_rally {is_reached = false; current_rally_count++} -> Check_ball_travel}; ball_check_end -> Ball_travel;
 				
-Test_ball_travel = Ball_travel deadline[2];
+Check_ball_travel = if (call(move_btw_val,0,1)){Wait[2]} 
+				else if (call(move_btw_val,1,2)){Wait[4]}
+				else if (call(move_btw_val,2,3)){Wait[6]}
+				else if (call(move_btw_val,3,4)){Wait[8]} 
+				else if (call(move_btw_val,4,5)){Wait[10]}
+				else {Wait[12]};
 
 /** LKY return from Position: 5 */
 // deadline is set for opponent to travel to ball
 // is_reached: opponent reached      !is_reached: opponent did not reach
-LKY_front_stroke_LHS = pcase { 
+LKY_front_stroke_LHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point
+			} else {
+			pcase { 
 			
 			/** Net Shot */
-			89: (Net_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 7; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1])); 
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_RHS}
-			22: (Net_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 8; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));  
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_LHS}
+			89: Net_Shot_STRAIGHT {is_reached = false;  shuttlecock = 7; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} ->  
+				ball_check_start -> ((ball_check_end ->  VTA_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			22: Net_Shot_CROSS    {is_reached = false;  shuttlecock = 8; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Net Lift Shot */
-			31: (Net_Lift_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 11; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_RHS}
-			42: (Net_Lift_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 12; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_LHS}
+			31: Net_Lift_Shot_STRAIGHT {is_reached = false;  shuttlecock = 11; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			42: Net_Lift_Shot_CROSS    {is_reached = false;  shuttlecock = 12; lky_pos = LKY_5; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Error */
-			25: Front_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> VTA_Win_Game_Point  		                                                            
-			};
+			25: Front_Stroke_ERROR { shuttlecock = 0} -> VTA_Win_Game_Point  		                                                            
+			}};
 			
 /** LKY return from Position: 6 */
-LKY_front_stroke_RHS = pcase { 
+LKY_front_stroke_RHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Net Shot */
-			46: (Net_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 7; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1])); 
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_RHS}
-			92: (Net_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 8; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-			    if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_LHS}
+			46: Net_Shot_CROSS    {is_reached = false;  shuttlecock = 7; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start -> ((ball_check_end ->  VTA_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			92: Net_Shot_STRAIGHT {is_reached = false;  shuttlecock = 8; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start -> ((ball_check_end ->  VTA_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Net Lift Shot */
-			44: (Net_Lift_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 11; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_RHS}
-			73: (Net_Lift_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 12; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_LHS}
+			44: Net_Lift_Shot_CROSS    {is_reached = false;  shuttlecock = 11; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			73: Net_Lift_Shot_STRAIGHT {is_reached = false;  shuttlecock = 12; lky_pos = LKY_6; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Error */
-			30: Front_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> VTA_Win_Game_Point     		                                                            
-			};
+			30: Front_Stroke_ERROR { shuttlecock = 0} -> VTA_Win_Game_Point     		                                                            
+			}};
 			
 /** VTA return from Position: 7 */
-VTA_front_stroke_RHS = pcase { 
+VTA_front_stroke_RHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Net Lift Shot */
-			95: (Net_Lift_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 1; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_LHS}
-			58: (Net_Lift_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 2; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_RHS}
+			95: Net_Lift_Shot_STRAIGHT {is_reached = false;  shuttlecock = 1; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			58: Net_Lift_Shot_CROSS    {is_reached = false;  shuttlecock = 2; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 			
 			/** Net Shot */
-			83: (Net_Shot_STRAIGHT      {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 5; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-			    if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_LHS}
-			44: (Net_Shot_CROSS         {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 6; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_RHS}
+			83: Net_Shot_STRAIGHT      {is_reached = false;  shuttlecock = 5; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			44: Net_Shot_CROSS         {is_reached = false;  shuttlecock = 6; vta_pos = VTA_7; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 			
 			/** Error */
-			38: Front_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> LKY_Win_Game_Point 		                                                            
-			};
+			38: Front_Stroke_ERROR { shuttlecock = 0} -> LKY_Win_Game_Point 		                                                            
+			}};
 			
 /** VTA return from Position: 8 */
-VTA_front_stroke_LHS = pcase { 
+VTA_front_stroke_LHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point
+			} else {
+			
+			pcase {
 
-			/** Net Lift Shot */
-			102: (Net_Lift_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 1; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-			     if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_LHS}
-			41: ( Net_Lift_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 2; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_RHS}
+			/** Net Lift Shot */ 
+			102: Net_Lift_Shot_CROSS    {is_reached = false;  shuttlecock = 1; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			41:  Net_Lift_Shot_STRAIGHT {is_reached = false;  shuttlecock = 2; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 			
 			/** Net Shot */
-			30: (Net_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 5; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_LHS}
-			77: (Net_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 6; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Front_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_RHS}
+			30: Net_Shot_CROSS    {is_reached = false;  shuttlecock = 5; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			77: Net_Shot_STRAIGHT {is_reached = false;  shuttlecock = 6; vta_pos = VTA_8; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 			
 			/** Error */
-			20: Front_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0;} -> LKY_Win_Game_Point    		                                                            
-			};
+			20: Front_Stroke_ERROR { shuttlecock = 0;} -> LKY_Win_Game_Point    		                                                            
+			}};
 			
 			
 /////////////////////////
@@ -368,104 +382,120 @@ VTA_front_stroke_LHS = pcase {
 /////////////////////////
 
 /** LKY return from Position: 3 */
-LKY_mid_stroke_LHS = pcase { 
+LKY_mid_stroke_LHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Drop Shot */
-			106: (Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 7; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_RHS}
-			18: (Drop_Shot_CROSS     {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 8; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_Win_Game_Point}
+			106: Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 7; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			18: Drop_Shot_CROSS     {is_reached = false;  shuttlecock = 8; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Drive Shot */
-			34: ( Drive_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 9;  lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-			   	 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_mid_stroke_RHS}
-			40: ( Drive_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 10; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_mid_stroke_LHS}
+			34:  Drive_Shot_STRAIGHT {is_reached = false;  shuttlecock = 9;  lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			40:  Drive_Shot_CROSS    {is_reached = false;  shuttlecock = 10; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Clear Shot */
-			12: (Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 11; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_RHS}
-			19: (Clear_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 12; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_LHS}
+			12: Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 11; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			19: Clear_Shot_CROSS    {is_reached = false;  shuttlecock = 12; lky_pos = LKY_3; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_LHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Error */
-			21: Mid_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> VTA_Win_Game_Point                                                            
-			};
+			21: Mid_Stroke_ERROR { shuttlecock = 0} -> VTA_Win_Game_Point                                                            
+			}};
 			
 /** LKY return from Position: 4 */
-LKY_mid_stroke_RHS = pcase { 
+LKY_mid_stroke_RHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Drop Shot */
-			40: ( Drop_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 7; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_RHS}
-			87: ( Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 8; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_LHS}
+			40:  Drop_Shot_CROSS    {is_reached = false;  shuttlecock = 7; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			87:  Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 8; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Drive Shot */
-			27: ( Drive_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 9; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_mid_stroke_RHS}
-			47: ( Drive_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 10; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_mid_stroke_LHS}
+			27:  Drive_Shot_CROSS    {is_reached = false;  shuttlecock = 9; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			47:  Drive_Shot_STRAIGHT {is_reached = false;  shuttlecock = 10; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Clear Shot */
-			6: (  Clear_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 11; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_RHS}
-			18: ( Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 12; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_LHS}
+			6:   Clear_Shot_CROSS    {is_reached = false;  shuttlecock = 11; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_RHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			18:  Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 12; lky_pos = LKY_4; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Error */
-			32:  Mid_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> VTA_Win_Game_Point   		                                                            
-			};
+			32:  Mid_Stroke_ERROR { shuttlecock = 0} -> VTA_Win_Game_Point   		                                                            
+			}};
 	
 /** VTA return from Position: 9 */
-VTA_mid_stroke_RHS = pcase { //*******************************
+VTA_mid_stroke_RHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Clear Shot */
-			13: (Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 1; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_LHS}
-			13: (Clear_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 2; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[3]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_RHS}
+			13: Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 1; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			13: Clear_Shot_CROSS    {is_reached = false;  shuttlecock = 2; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_RHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 
 			/** Drive Shot */
-			54: (Drive_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 3; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_mid_stroke_LHS}
-			47: (Drive_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 4; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_mid_stroke_RHS}
+			54: Drive_Shot_STRAIGHT {is_reached = false;  shuttlecock = 3; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			47: Drive_Shot_CROSS    {is_reached = false;  shuttlecock = 4; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 
 			/** Drop Shot */
-			58: (Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 5; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_LHS}
-			51: (Drop_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 6; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_RHS}
+			58: Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 5; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			51: Drop_Shot_CROSS    {is_reached = false;  shuttlecock = 6; vta_pos = VTA_9; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 			
 			/** Error */
-			34: Mid_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> LKY_Win_Game_Point   		                                                            
-			};
+			34: Mid_Stroke_ERROR { shuttlecock = 0} -> LKY_Win_Game_Point   		                                                            
+			}};
 			
 /** VTA return from Position: 10 */
-VTA_mid_stroke_LHS = pcase { 
+VTA_mid_stroke_LHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Clear Shot */
-			22: (Clear_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 1; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[3]));
-				if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ LKY_back_stroke_LHS}
-			20: (Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 2; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[4]));
-				if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ LKY_back_stroke_RHS}
+			22: Clear_Shot_CROSS    {is_reached = false;  shuttlecock = 1; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_LHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			20: Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 2; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_RHS) interrupt[9] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 
 			/** Drive Shot */
-			24: (Drive_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 3; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ LKY_mid_stroke_LHS}
-			61: (Drive_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 4; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ LKY_mid_stroke_RHS}
+			24: Drive_Shot_CROSS    {is_reached = false;  shuttlecock = 3; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			61: Drive_Shot_STRAIGHT {is_reached = false;  shuttlecock = 4; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 
 			/** Drop Shot */
-			24: (Drop_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 5; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ LKY_front_stroke_LHS}
-			98: (Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 6; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				if(!is_reached){ Mid_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ LKY_front_stroke_RHS}
+			24: Drop_Shot_CROSS    {is_reached = false;  shuttlecock = 5; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			98: Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 6; vta_pos = VTA_10; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 			
 			/** Error */
-			26: Mid_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> LKY_Win_Game_Point    		                                                            
-			};
+			26: Mid_Stroke_ERROR { shuttlecock = 0} -> LKY_Win_Game_Point    		                                                            
+			}};
 
 
 //////////////////////////
@@ -473,104 +503,120 @@ VTA_mid_stroke_LHS = pcase {
 //////////////////////////
 
 /** LKY return from Position: 1 */
-LKY_back_stroke_LHS = pcase { 
+LKY_back_stroke_LHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Drop Shot */
-			21: (Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 7; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_RHS}
-			27: (Drop_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 8; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_LHS}
+			21: Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 7; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			27: Drop_Shot_CROSS    {is_reached = false;  shuttlecock = 8; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Drive Shot */
-			99: (Smash_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 9; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_mid_stroke_RHS}
-			57: (Smash_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 10; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_mid_stroke_LHS}
+			99: Smash_Shot_STRAIGHT {is_reached = false;  shuttlecock = 9; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			57: Smash_Shot_CROSS    {is_reached = false;  shuttlecock = 10; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_LHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Clear Shot */
-			33: (Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 11; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_RHS}
-			13: (Clear_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 12; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_LHS}
+			33: Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 11; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_RHS) interrupt[9] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			13: Clear_Shot_CROSS    {is_reached = false;  shuttlecock = 12; lky_pos = LKY_1; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_LHS) interrupt[9] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Error */
-			18: Back_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> VTA_Win_Game_Point  		                                                            
-			};
+			18: Back_Stroke_ERROR { shuttlecock = 0} -> VTA_Win_Game_Point  		                                                            
+			}};
 			
 /** LKY return from Position: 2 */
-LKY_back_stroke_RHS = pcase { 
+LKY_back_stroke_RHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Drop Shot */
-			18: (Drop_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 7; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2])); 
-			    if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_RHS}
-			14: (Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 8; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[1])); 
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_front_stroke_LHS}
+			18: Drop_Shot_CROSS    {is_reached = false;  shuttlecock = 7; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			14: Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 8; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Drive Shot */
-			32: (Smash_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 9; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3])); 
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_mid_stroke_RHS}
-			61: (Smash_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 10; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[2])); 
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ VTA_mid_stroke_LHS}
+			32: Smash_Shot_CROSS    {is_reached = false;  shuttlecock = 9; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_RHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			61: Smash_Shot_STRAIGHT {is_reached = false;  shuttlecock = 10; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_mid_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Clear Shot */
-			6: (Clear_Shot_CROSS     {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 11; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[4])); 
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_RHS}
-			11: (Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 12; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> (Ball_travel deadline[3])); 
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> LKY_Win_Game_Point }else{ VTA_back_stroke_LHS}
+			6: Clear_Shot_CROSS     {is_reached = false;  shuttlecock = 11; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_RHS) interrupt[9] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			11: Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 12; lky_pos = LKY_2; call(distance_to_move, shuttlecock, vta_pos);} -> 
+				ball_check_start ->((ball_check_end ->  VTA_back_stroke_LHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Error */
-			13: Back_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> VTA_Win_Game_Point     		                                                            
-			}; 
+			13: Back_Stroke_ERROR { shuttlecock = 0} -> VTA_Win_Game_Point     		                                                            
+			}}; 
 
 /** VTA return from Position: 11 */
-VTA_back_stroke_RHS = pcase { 
+VTA_back_stroke_RHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Clear Shot */
-			18: (Clear_Shot_CROSS   {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 1; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[3]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_LHS}
-			0: (Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 2; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[4]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_RHS}
+			18: Clear_Shot_CROSS   {is_reached = false;  shuttlecock = 1; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_LHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			0: Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 2; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_RHS) interrupt[9] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 
 			/** Drive Shot */
-			64: (Smash_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 3; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_mid_stroke_LHS}
-			27: (Smash_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 4; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[3]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_mid_stroke_RHS}
+			64: Smash_Shot_CROSS    {is_reached = false;  shuttlecock = 3; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			27: Smash_Shot_STRAIGHT {is_reached = false;  shuttlecock = 4; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_RHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 
 			/** Drop Shot */
-			8: (Drop_Shot_CROSS     {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 5; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_LHS}
-			10: (Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 6; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				 if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_RHS}
+			8: Drop_Shot_CROSS     {is_reached = false;  shuttlecock = 5; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_LHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
+			10: Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 6; vta_pos = VTA_11; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point))
 			
 			/** Error */
-			11: Back_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> LKY_Win_Game_Point 		                                                            
-			};
+			11: Back_Stroke_ERROR { shuttlecock = 0} -> LKY_Win_Game_Point 		                                                            
+			}};
 
 /** VTA return from Position: 12 */
-VTA_back_stroke_LHS = pcase { 
+VTA_back_stroke_LHS = if(!is_reached){
+				Timeout_ERROR {shuttlecock = 0; } -> VTA_Win_Game_Point
+			} else {
+			
+			pcase {
 
 			/** Clear Shot */
-			15: (Clear_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 1; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[4]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_LHS}
-			13: (Clear_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 2; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[3]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_back_stroke_RHS}
+			15: Clear_Shot_STRAIGHT {is_reached = false;  shuttlecock = 1; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_LHS) interrupt[9] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			13: Clear_Shot_CROSS    {is_reached = false;  shuttlecock = 2; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_back_stroke_RHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Drive Shot */
-			44: (Smash_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 3; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[3]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_mid_stroke_LHS}
-			74: (Smash_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 4; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-				if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_mid_stroke_RHS}
+			44: Smash_Shot_STRAIGHT {is_reached = false;  shuttlecock = 3; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_LHS) interrupt[7] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			74: Smash_Shot_CROSS    {is_reached = false;  shuttlecock = 4; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_mid_stroke_RHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 
 			/** Drop Shot */
-			5: (Drop_Shot_STRAIGHT {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 5; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[2]));
-			   if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_LHS}
-			5: (Drop_Shot_CROSS    {is_reached = false; previous_shuttlecock = shuttlecock; shuttlecock = 6; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> (Ball_travel deadline[1]));
-			   if(!is_reached){ Back_Stroke_ERROR {shuttlecock = 0; previous_shuttlecock = 0;} -> VTA_Win_Game_Point }else{ LKY_front_stroke_RHS}
+			5: Drop_Shot_STRAIGHT {is_reached = false;  shuttlecock = 5; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_LHS) interrupt[5] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
+			5: Drop_Shot_CROSS    {is_reached = false;  shuttlecock = 6; vta_pos = VTA_12; call(distance_to_move, shuttlecock, lky_pos);} -> 
+				ball_check_start ->((ball_check_end ->  LKY_front_stroke_RHS) interrupt[3] (Timeout_ERROR {shuttlecock = 0; } -> LKY_Win_Game_Point))
 			
 			/** Error */
-			27: Back_Stroke_ERROR {previous_shuttlecock = 0; shuttlecock = 0} -> LKY_Win_Game_Point    		                                                            
-			};
+			27: Back_Stroke_ERROR { shuttlecock = 0} -> LKY_Win_Game_Point    		                                                            
+			}};
 
 ///////////////////////////
 /** Win Game Point Event */
@@ -624,7 +670,7 @@ LKY_Win_Game_Point = {
 	}
 	
 	/** Game State: LKY_GAME_POINT */
-	else if (game_state == LKY_GAME_POINT) {
+	else  {
 		/** LKY +1 Match Point */
 		lky_match_point++;
 		
@@ -689,7 +735,7 @@ VTA_Win_Game_Point = {
 		turn = vta_game_point % 2 + 2;
 	}
 	
-	else if (game_state == VTA_GAME_POINT) {
+	else  {
 		/** VTA +1 Match Point */
 		vta_match_point++;
 		
@@ -709,7 +755,7 @@ VTA_Win_Game_Point = {
 
 
 /** Next Point Event */
-NextPoint = LKY_Serve [] VTA_Serve [] ([won != na] GameOver -> Skip);
+NextPoint =if(won != na) { GameOver -> Skip} else { LKY_Serve [] VTA_Serve};
 
 
 /////////////////
